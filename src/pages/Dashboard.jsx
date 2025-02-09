@@ -12,18 +12,14 @@ export default function Dashboard() {
     const {register,handleSubmit,formState: { errors },reset } = useForm();
     const { updateTitle, updateSubtitle } = useTitleContext();
     const [user, settUser] = useState({})
-    const [topupPending,setTopUpPending] = useState(0)
-    const [transaksiPending,setTransaksiPending] = useState(0)
     useEffect(() => {
         updateSubtitle("Darma WhatsApp")
         updateTitle("Dashboard")
         const getUser = async () => {
             const data = await SupabaseClient.getWhere("profile", "username", localStorage.getItem("username"));
-            const topup = await SupabaseClient.getWhere("topup", "status_trx", 0);
-            const trx = await SupabaseClient.getWhere("trx_ppob", "status_trx", 0);
+           
             settUser(data[0])
-            setTopUpPending(topup.length)
-            setTransaksiPending(trx.length)
+           
         }
         getUser()
     }, [])

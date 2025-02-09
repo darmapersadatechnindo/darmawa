@@ -56,6 +56,7 @@ export default function Auth() {
                         errors={errors}
                     />
                     <Input
+                        type="password" 
                         label="Password"
                         name="password"
                         placeholder="Password"
