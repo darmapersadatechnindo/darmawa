@@ -3,8 +3,8 @@ import Sidebar from "./Sidebar"
 import Header from "./Header"
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "../../pages/Dashboard";
-import Device from "../../pages/whatsapp/Device.jsx";
-import Pesan from "../../pages/whatsapp/Pesan.jsx";
+import Device from "../../pages/Device.jsx";
+import Pesan from "../../pages/Pesan.jsx";
 import Profile from '../../pages/Profile.jsx'
 import Logout from '../../pages/Logout.jsx'
 export default function Template() {

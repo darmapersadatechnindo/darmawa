@@ -1,86 +1,50 @@
 import { useEffect, useState, useRef } from "react";
 import socket from "../../components/config/Socket";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBan, faBullhorn, faClock, faImage, faNoteSticky, faVideo, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faBan, faBullhorn, faClock, faImage, faNoteSticky, faVideo, faCheck, faPhoneSlash, faMicrophone, faPhone } from "@fortawesome/free-solid-svg-icons";
 import Icon from "../../components/base/Icon";
 import RightChat from "./RightChat";
+import _ from "lodash";
+import WhatsApp from "../../components/config/WhatsApp";
+import Utils from '../../components/config/Utils'
 
-export default function LeftChat({ sessionId }) {
-    const [listChat, setListChat] = useState([]);
-    const profilPic = useRef(new Map());
+export default function LeftChat({ sessionId, listChat }) {
+
     const [chatId, setChatId] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [selected, setSelected] = useState({});
     const [isFirstLoad, setIsFirstLoad] = useState(true);
+    const [name, setName] = useState("");
+    const [image, setImage] = useState("");
     
-    const formatDate = (timestamp) => {
-        const now = new Date();
-        const timestampDate = new Date(timestamp * 1000);
-        const today = new Date(now.setHours(0, 0, 0, 0));
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-    
-        const dd = timestampDate.getDate().toString().padStart(2, "0");
-        const mm = (timestampDate.getMonth() + 1).toString().padStart(2, "0");
-        const yy = timestampDate.getFullYear().toString().slice(-2);
-    
-        if (timestampDate.toDateString() === new Date().toDateString()) {
-            return timestampDate.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false });
-        }
-        if (timestampDate.toDateString() === yesterday.toDateString()) {
-            return "Kemarin";
-        }
-        return `${dd}/${mm}/${yy}`;
-    };
-    
+    useEffect(() => {
+        
+    }, [sessionId, listChat])
 
     const formatMessage = (message) => {
         if (!message) return "";
         return message.replace(/\*(.*?)\*/g, "<b>$1</b>").replace(/_(.*?)_/g, "<i>$1</i>");
     };
 
-    useEffect(() => {
-        const handleSocketEvent = async (data) => {
-            
-            if (data.event === "chats") {
-                
-                setListChat(data.data);
 
-                data.data.forEach((chat) => {
-                    if (!profilPic.current.has(chat.id)) {
-                        socket.emit("profilPic", { userId: chat.id, sessionId });
-                        profilPic.current.set(chat.id, null);
-                    }
-                });
-            }
-
-            if (data.event === "profilPic") {
-                profilPic.current.set(data.data.userId, data.data.profilPic);
-                setListChat((prevChats) => [...prevChats]);
-            }
-
-            if (data.event === "sendSeen") {
-                setTimeout(() => socket.emit("chats", sessionId), 500);
-            }
-        };
-
-        socket.on("waClient", handleSocketEvent);
-        return () => socket.off("waClient", handleSocketEvent);
-    }, [sessionId,listChat]);
-
-    const handleSelectChat = (chatId) => {
-        socket.emit("sendSeen", { chatId, sessionId });
+    const handleSelectChat = async (chatId,name,image,isGroup) => {
+        const result = await WhatsApp.sendSeen(sessionId,chatId,isGroup);
+        setTimeout(async () => {
+            await WhatsApp.listChat(sessionId)
+        }, 500);
         setChatId(chatId);
-        setSelected({ [chatId]: true }); 
-        setIsFirstLoad(true)
+        setName(name)
+        setImage(image)
+        setSelected({ [chatId]: true });
+        
     };
-    useEffect(()=>{
 
-    },[])
-    const filteredChats = listChat.filter(
+
+    
+    const filteredChats = (listChat || []).filter(
         (chat) =>
-            chat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (chat.message?.toLowerCase() || "").includes(searchTerm.toLowerCase()) // Perbaikan: Cegah error jika `message` null
+            chat.contact?.formattedName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (chat.lastMessage?.body?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     );
     return (
         <div className="flex mt-3 space-x-4">
@@ -96,14 +60,20 @@ export default function LeftChat({ sessionId }) {
                 )}
                 {filteredChats.length > 0 && sessionId !== "" ? (
                     filteredChats.map((chat, index) => {
-                        const isSelected = selected[chat.id] === true;
-                        const profilePicUrl = profilPic.current.get(chat.id) || "default-avatar.png";
-                        let message = chat.message || "";
+                        const isSelected = selected[chat.id._serialized] === true;
+                        let profilPic
+                        if (chat.isGroup) {
+                            profilPic = chat.contact.profilePicThumbObj?.eurl || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_vKQqeh6KEcMZJl6M3kxxCybMxDvZErbrfQ&s"
+                        } else {
+                            profilPic = chat.contact.profilePicThumbObj?.eurl || "https://www.pngitem.com/pimgs/m/150-1503945_transparent-user-png-default-user-image-png-png.png"
+                        }
+                        
+                        let message;
                         let icon = null;
                         let read = null;
-
-                        if (chat.fromMe) {
-                            switch (chat.ack) {
+                        
+                        if (chat.lastMessage?.fromMe, chat.lastMessage?.ack) {
+                            switch (chat.lastMessage?.ack) {
                                 case 1: read = <FontAwesomeIcon icon={faCheck} />; break;
                                 case 2: read = <Icon.unRead />; break;
                                 case 3: read = <Icon.Read />; break;
@@ -111,31 +81,40 @@ export default function LeftChat({ sessionId }) {
                             }
                         }
 
-                        switch (chat.Type) {
+                        switch (chat.lastMessage?.type) {
                             case "image":
                                 icon = <FontAwesomeIcon icon={faImage} className="me-1" />;
-                                message = chat.message || "Foto";
+                                message = chat.lastMessage.caption || "Foto";
                                 break;
                             case "sticker":
                                 icon = <FontAwesomeIcon icon={faNoteSticky} className="me-1" />;
-                                message = "Stiker";
+                                message = chat.lastMessage.caption || "Stiker";
                                 break;
                             case "video":
                                 icon = <FontAwesomeIcon icon={faVideo} className="me-1" />;
-                                message = chat.message || "Video";
+                                message = chat.lastMessage.caption || "Video";
+                                break;
+                            case "ptv":
+                                icon = <FontAwesomeIcon icon={faVideo} className="me-1" />;
+                                message = chat.lastMessage.caption || "Video pendek";
                                 break;
                             case "chat":
+                                message = chat.lastMessage.body;
                                 break;
                             case "revoked":
-                                icon = <FontAwesomeIcon icon={faBan} />;
+                                icon = <FontAwesomeIcon icon={faBan} className="me-1" />;
                                 message = "Pesan telah dihapus";
                                 break;
-                            case "notification_template":
-                                icon = <FontAwesomeIcon icon={faClock} />;
-                                message = `${chat.name} Menggunakan timer default untuk pesan`;
+                            case "call_log":
+                                icon = <FontAwesomeIcon icon={faPhone} className="me-1" />;
+                                message = "Log Panggilan";
+                                break;
+                            case "ptt":
+                                icon = <FontAwesomeIcon icon={faMicrophone} className="text-blue-500 me-1" />;
+                                message = "Pesan suara";
                                 break;
                             case "interactive":
-                                icon = <FontAwesomeIcon icon={faBullhorn} />;
+                                icon = <FontAwesomeIcon icon={faBullhorn} className="me-1" />;
                                 break;
                             default:
                                 break;
@@ -145,20 +124,20 @@ export default function LeftChat({ sessionId }) {
                             <div
                                 key={index}
                                 className={`flex ${isSelected ? "bg-gray-100" : "bg-white"} items-center text-sm cursor-pointer hover:bg-gray-50 p-4 border-b-2 border-gray-100`}
-                                onClick={() => handleSelectChat(chat.id)}
+                                onClick={() => handleSelectChat(chat.id._serialized,chat.contact.formattedName,profilPic,chat.isGroup)}
                             >
-                                <img src={profilePicUrl} className="w-9 h-9 me-2 rounded-full" />
+                                <img src={profilPic} className="w-9 h-9 me-2 rounded-full object-cover" />
                                 <div className="w-full flex flex-col">
                                     <div className="flex justify-between">
-                                        <p className="font-bold">{chat.name}</p>
+                                        <p className="font-bold">{chat.contact.formattedName}</p>
                                         <p className={`text-xs ${chat.unreadCount > 0 ? "text-green-500" : "text-gray-600"}`}>
-                                            {formatDate(chat.timestamp)}
+                                            {Utils.formatDate(chat.lastMessage?.timestamp)}
                                         </p>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <p className="text-gray-500 flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
-                                            {chat.fromMe && (<span className="me-1">{read}</span>)} {icon}
-                                            <span dangerouslySetInnerHTML={{ __html: formatMessage(message) }} />
+                                            {chat.lastMessage?.fromMe && (<span className="me-1">{read}</span>)} {icon}
+                                            <span dangerouslySetInnerHTML={{ __html: formatMessage(message)}} />
                                         </p>
                                         {chat.unreadCount > 0 && (
                                             <p className="text-xs bg-green-500 text-white rounded-full flex justify-center items-center w-6 h-6">
@@ -171,15 +150,16 @@ export default function LeftChat({ sessionId }) {
                         );
                     })
                 ) : (
-                    <p className="text-gray-500 text-center">Tidak ada hasil ditemukan</p>
+                    <p className="text-gray-500 text-center">Sedang memuat list chat</p>
                 )}
             </div>
 
-            {chatId && <RightChat 
-                chatId={chatId} 
-                sessionId={sessionId} 
-                isFirstLoad={isFirstLoad} 
-                setIsFirstLoad={setIsFirstLoad} />}
+            {chatId && <RightChat
+                chatId={chatId}
+                sessionId={sessionId}
+                names={name}
+                image={image}
+                />}
         </div>
     );
 }

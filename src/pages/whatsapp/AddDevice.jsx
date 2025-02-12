@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMobileAndroidAlt, faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import { faMobileAndroidAlt, faRefresh, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import SupabaseClient from "../../components/config/SupabaseClient";
-import socket from "../../components/config/Socket";
+import WhatsApp from "../../components/config/WhatsApp";
 
-export default function AddDevice({getDevice}) {
+export default function AddDevice({ getDevice }) {
     const [loading, setLoading] = useState(false)
     const owner = localStorage.getItem("username")
     const {
@@ -14,23 +14,29 @@ export default function AddDevice({getDevice}) {
         formState: { errors },
         reset
     } = useForm();
-    const onSubmit = async(data) => {
+    const onSubmit = async (data) => {
         setLoading(true);
-        const dataInsert = {
-            name:data.sessionId,
-            owner
+        const getToken = await WhatsApp.getToken(data.sessionId)
+        const saveSupabase = {
+            owner,
+            name : data.sessionId,
+            token : getToken.token,
+            full: getToken.full
         }
-        await SupabaseClient.Insert("device",dataInsert)
+        await SupabaseClient.Insert("device",saveSupabase)
         getDevice()
-        socket.emit("start", data.sessionId)
-        
         reset();
         setLoading(false)
     }
     return (
         <div className="w-full  rounded-lg shadow-md p-5 flex flex-col bg-white">
             <div className="w-36 h-36 rounded-full bg-gray-300 mx-auto flex justify-center items-center text-gray-500">
-                <FontAwesomeIcon icon={faMobileAndroidAlt} className="text-8xl" />
+                {loading ?
+                    <FontAwesomeIcon icon={faRefresh} className="text-8xl animate-spin" />
+                    :
+                    <FontAwesomeIcon icon={faMobileAndroidAlt} className="text-8xl" />
+                }
+
             </div>
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
                 <input

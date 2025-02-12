@@ -1,57 +1,109 @@
-import SupabaseClient from "./SupabaseClient";
+import axios from "axios";
+import { getMedia } from "./indexedDBUtils";
 
-const baseUrl = "http://con5.tokojapri.com:3000/api"
-const secretKey = "ServerWhatsAppJapri2025"
+//const baseUrl = "http://103.79.131.45:3000/api";
+const baseUrl = "http://185.250.38.224:8000/api";
+const secretKey = "DarmaPersadaTechnindo";
 
-
-const WA = {
+const WhatsApp = {
     getToken: async (sessionId) => {
-        const requestOptions = {
-            method: "POST",
-            redirect: "follow"
-        };
-        const response = await fetch(`${baseUrl}/${sessionId}/${secretKey}/generate-token`, requestOptions);
-
-        return response.json();
+        const response = await axios.post(`${baseUrl}/${sessionId}/${secretKey}/generate-token`);
+        return response.data;
     },
     getStatus: async (sessionId) => {
-
-        const requestOptions = {
-            method: "GET",
-            redirect: "follow"
-        };
-        const response = await fetch(`${baseUrl}/${sessionId}/status-session`, requestOptions);
-        return response.json();
+        const response = await axios.get(`${baseUrl}/${sessionId}/status-session`);
+        return response.data;
     },
     startSession: async (sessionId) => {
+        const payload = {
+            webhook: "",
+            waitQrCode: true
+        };
 
-        const myHeaders = new Headers();
-        myHeaders.append("accept", "*/*");
-        myHeaders.append("Content-Type", "application/json");
-
-        const raw = JSON.stringify({
-            "webhook": "",
-            "waitQrCode": false
+        const response = await axios.post(`${baseUrl}/${sessionId}/start-session`, payload, {
+            headers: {
+                "Accept": "*/*",
+                "Content-Type": "application/json"
+            }
         });
 
-        const requestOptions = {
-            method: "POST",
-            headers: myHeaders,
-            body: raw,
-            redirect: "follow"
-        };
-        const response = await fetch(`${baseUrl}/${sessionId}/start-session`, requestOptions);
-        return response.json();
+        return response.data;
     },
     listChat: async (sessionId) => {
-
-        const requestOptions = {
-            method: "POST",
-            redirect: "follow"
-        };
-        const response = await fetch(`${baseUrl}/${sessionId}/list-chats`, requestOptions);
-        return response.json();
+        const response = await axios.post(`${baseUrl}/${sessionId}/list-chats`);
+        return response.data;
     },
+    hostDevice: async (sessionId) => {
+        const response = await axios.get(`${baseUrl}/${sessionId}/host-device`);
+        return response.data;
+    },
+    profilPic: async (sessionId, phone) => {
+        const response = await axios.get(`${baseUrl}/${sessionId}/profile-pic/${phone}`);
+        return response.data;
+    },
+    logout: async (sessionId) => {
+        const response = await axios.post(`${baseUrl}/${sessionId}/logout-session`);
+        return response.data;
+    },
+    loadMessage: async (sessionId, phone) => {
+        const response = await axios.get(`${baseUrl}/${phone}/all-messages-in-chat/${sessionId}?isGroup=false&includeMe=true&includeNotifications=true`,{
+            headers: {
+                "accept": "*/*"
+              },
+        });
+        return response.data;
+    },
+    getMedia: async (sessionId,messageId) => {
+        const response = await axios.get(`${baseUrl}/${sessionId}/get-media-by-message/${messageId}`,{
+            headers: {
+                "accept": "*/*"
+              },
+        });
+        return response.data;
+    },
+    sendSeen : async (sessionId, chatId, isGroup) => {
+        try {
+            const response = await axios.post(`${baseUrl}/${sessionId}/send-seen`, 
+                {
+                    phone: chatId,
+                    isGroup: isGroup
+                }, 
+                {
+                    headers: {
+                        "accept": "*/*",
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error("Error sending seen status:", error);
+            return null;
+        }
+    },
+    sendMessage : async (sessionId, chatId, content) => {
+        try {
+            const response = await axios.post(`${baseUrl}/${sessionId}/send-message`, 
+                {
+                    phone: chatId,
+                    isGroup: false,
+                    isNewsletter:false,
+                    isLid:false,
+                    message:content
+                }, 
+                {
+                    headers: {
+                        "accept": "*/*",
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error("Error sending seen status:", error);
+            return null;
+        }
+    },  
+};
 
-}
-export default WA;
+export default WhatsApp;
