@@ -6,10 +6,10 @@ import Icon from "../../components/base/Icon";
 import Modal from '../../components/base/Moda'
 import WhatsApp from "../../components/config/WhatsApp";
 import Utils from "../../components/config/Utils";
-import { saveMedia, getMedia } from "../../components/config/indexedDBUtils";
 
-export default function RightChat({ chatId, sessionId, names, image }) {
-    const [chats, setChats] = useState([])
+
+export default function RightChat({ chatId, sessionId, names, image,chats }) {
+    
     const chatEndRef = useRef(null);
     const [pesan, setPesan] = useState("")
     const [file, setFile] = useState(null);
@@ -18,13 +18,8 @@ export default function RightChat({ chatId, sessionId, names, image }) {
     const [preview, setPreview] = useState(false)
 
     const handleSenText = async () => {
-        //socket.emit("sendText", { chatId, message: pesan, sessionId })
-        console.log(pesan);
-        //await WhatsApp.sendMessage(sessionId,chatId,pesan)
+        socket.emit("sendText", { chatId, message: pesan, sessionId })
         setPesan("")
-        setTimeout(async () => {
-            await LoadMessage(chatId,sessionId)
-        }, 500);
     }
 
     const handleFileSelect = (event) => {
@@ -51,88 +46,10 @@ export default function RightChat({ chatId, sessionId, names, image }) {
         setFile(null);
         setFilePreview(null);
     };
-    const LoadMessage = async (sessionId, chatId) => {
-        const result = await WhatsApp.loadMessage(sessionId, chatId)
-        setChats(result.response)
-    }
-    useEffect(() => {
-        if (chatId !== "" && sessionId !== "") {
-            LoadMessage(chatId, sessionId)
-        }
-    }, [chatId, sessionId])
-    useEffect(() => {
-        
-        socket.on("anymessage", async(data)=>{
-            if(data.response.chatId === chatId){
-                LoadMessage(data.response.chatId, sessionId)
-            }
-        })
-        socket.on("revokedmessage", async(data)=>{
-            if(data.response.from === chatId){
-                LoadMessage(data.response.from, sessionId)
-            }
-        })
-        socket.on("onmessage", async(data)=>{
-            
-            if(data.session === sessionId){
-                if(chatId === data.from){
-                    LoadMessage(data.from, data.session)
-                }
-            }
-        })
-        socket.on("onAck", async(data)=>{
-            const ack = data.ack;
-            if(data.session === sessionId){
-                if(chatId === ack.to){
-                    LoadMessage(ack.to, data.session)
-                }
-            }
-        })
-        
-    }, [sessionId])
-    useEffect(() => {
-        const processMedia = async () => {
-            for (const chat of chats) {
-                if (["image", "video", "sticker", "audio", "document"].includes(chat.type)) {
-
-                    // ✅ Cek jika media sudah ada untuk menghindari re-request
-                    if (chat.mediaUrl) continue;
-
-                    const existingMedia = await getMedia(chat.id);
-
-                    if (existingMedia) {
-                        const Url = URL.createObjectURL(existingMedia);
-                        setChats((prevChats) =>
-                            prevChats.map((c) =>
-                                c.id === chat.id ? { ...c, mediaUrl: Url } : c
-                            )
-                        );
-                    } else {
-                        const response = await WhatsApp.getMedia(sessionId, chat.id);
-
-                        if (response && response.base64) {
-                            const mediaBlob = Utils.base64ToBlob(response.base64, response.mimetype);
-                            const mediaUrl = URL.createObjectURL(mediaBlob);
-
-                            await saveMedia(chat.id, mediaBlob);
-
-                            setChats((prevChats) =>
-                                prevChats.map((c) =>
-                                    c.id === chat.id ? { ...c, mediaUrl } : c
-                                )
-                            );
-                        }
-                    }
-                }
-            }
-        };
-
-        processMedia();
-        if (chatEndRef.current) {
-            chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-        console.log(chats)
-    }, [chats]);
+    
+    
+    
+    
     const handleSendMessage = () => {
         if (file) {
             const reader = new FileReader();
@@ -155,12 +72,14 @@ export default function RightChat({ chatId, sessionId, names, image }) {
                 setPesan("");
             };
         }
-       
+
         setPreview(false)
     };
-
+    useEffect(()=>{
+        
+    },[chatId,chats])
     return (
-        <div className="w-2/3 bg-white flex flex-col shadow-md max-h-[620px]">
+        <div className="w-2/3 bg-white flex flex-col shadow-md max-h-[600px]">
             <div className="flex p-3 items-center">
                 <img src={image} className="h-10 w-10 rounded-full object-cover" />
                 <div className="ms-3">
@@ -179,13 +98,12 @@ export default function RightChat({ chatId, sessionId, names, image }) {
                                 <div>
                                     <div className="max-w-[400px]">
                                         {msg.type === "image" && (
-
                                             <div className="flex flex-col">
                                                 <img
                                                     src={msg.mediaUrl}
                                                     alt="Media"
                                                     className="w-full h-auto rounded-lg mb-2 cursor-pointer"
-                                                    onClick={() => openMedia(msg.mediaUrl)}
+                                                    onClick={() => Utils.openMedia(msg.mediaUrl)}
                                                 />
                                                 {msg.caption && (
                                                     <span dangerouslySetInnerHTML={{ __html: Utils.formatChat(msg.caption, msg) }} />
@@ -205,7 +123,7 @@ export default function RightChat({ chatId, sessionId, names, image }) {
                                                 controls
                                                 src={msg.mediaUrl}
                                                 className="w-full max-h-64 rounded-lg mb-2"
-                                                onClick={() => openMedia(msg.mediaUrl)}
+                                                onClick={() => Utils.openMedia(msg.mediaUrl)}
                                             />
                                         )}
                                         {msg.type === "audio" && (
@@ -213,11 +131,11 @@ export default function RightChat({ chatId, sessionId, names, image }) {
                                                 controls
                                                 src={msg.mediaUrl}
                                                 className="w-full mb-2"
-                                                onClick={() => openMedia(msg.mediaUrl)}
+                                                onClick={() => Utils.openMedia(msg.mediaUrl)}
                                             />
                                         )}
                                         {msg.type === "document" && (
-                                            <div className="cursor-pointer " onClick={() => openMedia(msg.mediaUrl)}>
+                                            <div className="cursor-pointer " onClick={() => Utils.openMedia(msg.mediaUrl)}>
                                                 {msg.mimetype === "application/pdf" ? (
                                                     <div className="flex mb-2 items-center space-x-3 text-sm p-2 bg-green-200 rounded-md">
                                                         <iframe
@@ -242,7 +160,7 @@ export default function RightChat({ chatId, sessionId, names, image }) {
                                     </div>
                                 </div>
                                 {/* Tampilkan teks pesan */}
-                                {msg.subtype && msg.subtype === "url" && (
+                                {msg.links.length > 0 && (
                                     <a href={msg.matchedText} target="_blank">
                                         <div className="bg-green-200 text-sm rounded-lg mb-2 max-w-[400px]">
                                             {msg.thumbnail && <p className="text-xs">
@@ -255,7 +173,7 @@ export default function RightChat({ chatId, sessionId, names, image }) {
                                                 {msg.title ? <p className="text-xs m-0">
                                                     {msg.title}
                                                 </p> : <p className="text-xs m-0">
-                                                    {items.link}
+                                                    {msg.matchedText}
                                                 </p>}
                                                 {msg.description && <p className="text-[10px] text-gray-500 m-0">
                                                     {msg.description}

@@ -4,8 +4,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMobileAndroidAlt, faRefresh, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import SupabaseClient from "../../components/config/SupabaseClient";
 import WhatsApp from "../../components/config/WhatsApp";
+import socket from "../../components/config/Socket";
 
-export default function AddDevice({ getDevice }) {
+export default function AddDevice() {
     const [loading, setLoading] = useState(false)
     const owner = localStorage.getItem("username")
     const {
@@ -16,15 +17,7 @@ export default function AddDevice({ getDevice }) {
     } = useForm();
     const onSubmit = async (data) => {
         setLoading(true);
-        const getToken = await WhatsApp.getToken(data.sessionId)
-        const saveSupabase = {
-            owner,
-            name : data.sessionId,
-            token : getToken.token,
-            full: getToken.full
-        }
-        await SupabaseClient.Insert("device",saveSupabase)
-        getDevice()
+        socket.emit("createDevice",{sessionId:data.sessionId, ownerId: localStorage.getItem("ownerId")})
         reset();
         setLoading(false)
     }

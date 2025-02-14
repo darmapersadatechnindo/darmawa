@@ -20,22 +20,7 @@ const Utils = {
     },
     openMedia: (mediaUrl) => {
         try {
-            const [header, base64Data] = mediaUrl.split(",");
-            const mimeType = header.match(/:(.*?);/)[1]; // Ambil MIME type dari data URL
-
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Uint8Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-
-            const blob = new Blob([byteNumbers], { type: mimeType });
-            const blobUrl = URL.createObjectURL(blob);
-
-            window.open(blobUrl, "_blank");
-
-            // Bebaskan memori setelah beberapa detik
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+            window.open(mediaUrl, "_blank");
         } catch (error) {
             console.error("Gagal membuka media:", mediaUrl);
         }
@@ -70,12 +55,10 @@ const Utils = {
             .replace(/_(.*?)_/g, "<i>$1</i>")   // Italic (_text_)
             .replace(/\n/g, "<br>");            // Newline to <br>
 
-        if (msg.subtype && msg.subtype === "url") {
-            formattedMessage = formattedMessage.replace(
-                msg.matchedText,
-                `<a href="${msg.matchedText}" target="_blank" class="text-blue-500">${msg.matchedText}</a>`
-            );
-        }
+        formattedMessage = formattedMessage.replace(
+            msg.matchedText,
+            `<a href="${msg.matchedText}" target="_blank" class="text-blue-500">${msg.matchedText}</a>`
+        );
 
         return formattedMessage;
     },
@@ -85,17 +68,17 @@ const Utils = {
         else if (bytes < 1024 ** 3) return (bytes / 1024 ** 2).toFixed(2) + " MB";
         else return (bytes / 1024 ** 3).toFixed(2) + " GB";
     },
-    base64ToBlob : (base64, mimeType) => {
+    base64ToBlob: (base64, mimeType) => {
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
-        
+
         for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
-        
+
         const byteArray = new Uint8Array(byteNumbers);
         return new Blob([byteArray], { type: mimeType });
     },
-    
+
 }
 export default Utils

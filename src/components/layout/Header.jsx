@@ -8,32 +8,7 @@ export default function Header({ toggleSidebar, isOpen }) {
     const [user, settUser] = useState("")
     const [balance, setBalance] = useState("")
     const [loading, setLoading] = useState(false)
-    function Rupiah(amount) {
-        return new Intl.NumberFormat("id-ID", {
-            style: "decimal",
-            minimumFractionDigits: 0,
-        }).format(amount);
-    }
-    const getBalance = async () => {
-        const response = await fetch("https://apidigiflazz.vercel.app/balance", { method: "GET" });
-        const result = await response.json();
-        const saldo = result.deposit
-        setBalance(Rupiah(saldo))
-        setLoading(false)
-    }
-    useEffect(() => {
-        const getUser = async () => {
-            const data = await SupabaseClient.getWhere("profile", "username", localStorage.getItem("username"));
-            settUser(data[0].name)
-        }
-        getUser()
-        getBalance();
-    }, [])
-    const handlegetBalance = async () => {
-        setLoading(true);
-        getBalance();
-
-    }
+    
     return (
         <div className="flex bg-gray-50 items-center p-3 shadow-b-only shadow-md">
             <div className="flex-1 flex ms-0 justify-between items-center">

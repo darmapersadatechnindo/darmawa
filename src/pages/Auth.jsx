@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import SupabaseClient from "../components/config/SupabaseClient";
 import Toast from "../components/config/Toast";
-import CryptoJS from "crypto-js";
 import { useNavigate } from "react-router-dom";
 import Input from "../components/base/Input";
 import Button from '../components/base/Button'
+import socket from "../components/config/Socket";
 export default function Auth() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false)
@@ -17,26 +16,31 @@ export default function Auth() {
 
     const onSubmit = async (data) => {
         setLoading(true)
-        const cekUsername = await SupabaseClient.getWhere("profile", "username", data.username);
-        if (cekUsername.length === 0) {
-            Toast("Username tidak terdaftar", 0)
-        } else {
-            const row = cekUsername[0]
-            const password = CryptoJS.MD5(data.password).toString();
-            if (password === row.password) {
-                Toast("Anda berhasil masuk", 1)
-                localStorage.setItem("isLogin", true);
-                localStorage.setItem("level", row.level)
-                localStorage.setItem("username", data.username);
-                window.location.href = "./app/dashboard"
-            } else {
-                Toast("Password yang anda masukan tidak sesuai", 0)
-            }
+        if (data.username === "admin" && data.password == "admin") {
+                    localStorage.setItem("isLogin", true);
+                    localStorage.setItem("level", "owner")
+                    localStorage.setItem("username", "admin");
+                    localStorage.setItem("ownerId", 1);
+                    window.location.href = "./app/dashboard"
         }
-        setLoading(false)
+        //socket.emit("login", { username: data.username, password: data.password });
+        // socket.on("login", (response) => {
+        //     setLoading(false);
+        //     if (response.success) {
+        //         Toast(response.message, 1)
+        //         localStorage.setItem("isLogin", true);
+        //         localStorage.setItem("level", response.data.role)
+        //         localStorage.setItem("username", response.data.username);
+        //         localStorage.setItem("ownerId", response.data.userId);
+        //         window.location.href = "./app/dashboard"
+
+        //     } else {
+        //         Toast(response.message, 0)
+        //     }
+        //    setLoading(false)
+        //});
     };
 
-    console.log(localStorage.getItem("isLogin"))
     return (
         <div className="h-screen w-full bg-gray-200 text-black flex flex-col justify-center items-center px-5">
             <div className="bg-gray-50 border-2 border-gray-300 p-6 rounded-xl lg:w-1/4 w-full">
@@ -56,7 +60,7 @@ export default function Auth() {
                         errors={errors}
                     />
                     <Input
-                        type="password" 
+                        type="password"
                         label="Password"
                         name="password"
                         placeholder="Password"

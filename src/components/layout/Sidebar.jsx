@@ -26,7 +26,7 @@ export default function Sidebar({ isSidebarOpen, toggleSidebar }) {
   const location = useLocation();
   const [openSubmenu, setOpenSubmenu] = useState(null);
 
-  const menu = localStorage.getItem("level") === "1" ? [
+  const menu = localStorage.getItem("level") === "owner" ? [
     {
       name: "Dashboard",
       icon: faTachometerAlt,
@@ -54,7 +54,7 @@ export default function Sidebar({ isSidebarOpen, toggleSidebar }) {
     }
   ] : [
     {
-      name: "Dashboard",
+      name: "Dashboard ",
       icon: faTachometerAlt,
       path: "/app/dashboard",
     },
