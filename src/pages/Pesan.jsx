@@ -17,21 +17,18 @@ export default function Pesan() {
         // Emit hanya sekali saat komponen di-mount
         socket.emit("getDevice");
 
-        const showDevices = (data) => {
-            setDevice(data.data);
-        };
-        const waClient = (res)=>{
-            if(res.event === "disconnected"){
+        const waClient = (response)=>{
+            if(response.event === "disconnected"){
                 setTimeout(() => {
-                    socket.emit("restart",res.sessionId)
+                    socket.emit("getDevice");
                 }, 1000);
+            }
+            if (response.event === "showDevice") {
+                setDevice(response.data);
             }
         }
         socket.on("waClient",waClient)
-        socket.on("showDevice", showDevices);
         return () => {
-            // Hapus event listener saat unmount
-            socket.off("showDevice", showDevices);
             socket.off("waClient",waClient)
         };
     }, []);

@@ -25,14 +25,7 @@ export default function LeftChat({ sessionId, listChat }) {
         return bytes.buffer;
     };
     useEffect(() => {
-        listChat.forEach((chat, index) => {
-            if (!chat.imageUrl && !requestedContacts.current.has(chat.chatId)) {
-                requestedContacts.current.add(chat.chatId);
-                setTimeout(() => {
-                    socket.emit("getcontact", { chatId: chat.chatId, sessionId });
-                }, index * 200);
-            }
-        });
+
     }, [sessionId, listChat]);
 
     const formatMessage = (message) => {
@@ -58,36 +51,10 @@ export default function LeftChat({ sessionId, listChat }) {
             const showMessage = async (response) => {
                 
                 if (response.event === chatId) {
-                    console.log(response)
+                    //console.log(response)
                     const listMessage = response.data
-                    const chatData = await Promise.all(listMessage.map(async (chat, index) => {
-                        let mediaUrl = null;
-                        if (chat.hasMedia) {
-                            const mediaBlob = await getMedia(chat.id._serialized);
-                            if (mediaBlob instanceof Blob) {
-                                mediaUrl =  URL.createObjectURL(mediaBlob);
-
-                            } else {
-                                socket.emit("downloadMedia", { messageId: chat.id._serialized, sessionId });
-                            }
-                        }
-                        return {
-                            id:chat.id._serialized,
-                            fromMe: chat.fromMe,
-                            mediaUrl,
-                            caption: chat._data.caption,
-                            type: chat.type,
-                            links: chat.links,
-                            matchedText: chat._data.matchedText,
-                            thumbnail: chat._data.thumbnail,
-                            timestamp: chat.timestamp,
-                            title: chat._data.title,
-                            description: chat._data.description,
-                            body: chat.body,
-                            ack: chat._data.ack,
-                        };
-                    }))
-                    setChats(chatData)
+                    
+                    setChats(listMessage)
                 }
                 if (response.event === "downloadMedia") {
                     const { messageId, media } = response.data;
@@ -100,7 +67,7 @@ export default function LeftChat({ sessionId, listChat }) {
                         prevChats.map((chat) => {
                             if (chat.id === messageId) {
                                 if (chat.mediaUrl) {
-                                    URL.revokeObjectURL(chat.mediaUrl); // Hapus URL lama
+                                    URL.revokeObjectURL(chat.mediaUrl); 
                                 }
                                 return { ...chat, mediaUrl: URL.createObjectURL(mediaBlob) };
                             }
@@ -120,21 +87,27 @@ export default function LeftChat({ sessionId, listChat }) {
     }, [chatId, sessionId])
     useEffect(()=>{
         const waClient = (response)=>{
+            if(response.event !== "chats")
+                setTimeout(() => {
+                    socket.emit("chats", response.session);
+                }, 500);
             if(response.event === "message_create"){
                 const userId = response.data.message.to;
                 if(chatId === userId){
                     setTimeout(() => {
+                       
                         socket.emit("showChats", { userId, sessionId });
                     }, 500);
                 }
             }
             if(response.event === "message"){
-                const userId = response.data.message.from;
-                if(chatId === userId){
-                    setTimeout(() => {
-                        socket.emit("showChats", { userId, sessionId });
-                    }, 500);
-                }
+                
+                // const userId = response.data.message.from;
+                // if(chatId === userId){
+                //     setTimeout(() => {
+                //         socket.emit("showChats", { userId, sessionId });
+                //     }, 500);
+                // }
             }
             if(response.event === "chat_removed"){
                 setChatId("")

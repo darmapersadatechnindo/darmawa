@@ -2,53 +2,102 @@ import { useEffect, useState } from "react";
 import { useTitleContext } from "../components/config/TitleContext";
 import AddDevice from "../pages/whatsapp/AddDevice";
 import socket from "../components/config/Socket";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faRefresh } from "@fortawesome/free-solid-svg-icons";
+import Modal from '../components/base/Moda'
 export default function Device() {
     const { updateTitle, updateSubtitle } = useTitleContext();
     const [device, setDevice] = useState([]);
     const [started, setStarted] = useState({});
-
     useEffect(() => {
         updateTitle("WhatsApp");
         updateSubtitle("Device");
-
-        socket.emit("getDevice");
-
-        const showDevices = (data) => {
-            setDevice(data.data);
-        };
-
-        const updateDevice = () => {
-            setTimeout(() => {
-                socket.emit("getDevice");
-            }, 500);
-        };
-
-        // Pasang event listener dengan cleanup
-        socket.on("showDevice", showDevices);
-        socket.on("QRCODE", showDevices);
-        socket.on("waClient", updateDevice);
-
-        return () => {
-            // Hapus event listener saat komponen unmount
-            socket.off("showDevice", showDevices);
-            socket.off("QRCODE", showDevices);
-            socket.off("waClient", updateDevice);
-        };
-    }, []); // Dependency array kosong -> hanya dijalankan saat mount
+        socket.emit("getDevice")
+    }, []);
 
     const startSession = (sessionId) => {
         setStarted((prev) => ({ ...prev, [sessionId]: true }));
         socket.emit("start", sessionId);
+
     };
 
     const restartSession = (sessionId) => {
         setStarted((prev) => ({ ...prev, [sessionId]: true }));
         socket.emit("restart", sessionId);
     };
-    const handleDelete = (sessionId)=>{
-        socket.emit("delete",sessionId)
+    const handleDelete = (sessionId) => {
+        socket.emit("delete", sessionId)
     }
+    const [sinkron, setSinkron] = useState(false)
+    const [open, setOpen] = useState(false)
+    const handleSync = (sessionId) => {
+        setSinkron(true)
+        setOpen(true)
+        socket.emit("sinkronisasi", sessionId)
+    }
+    useEffect(() => {
+        const handleWaClient = (response) => {
+            console.log(response)
+            if (response.event === "showDevice") {
+                setDevice(response.data)
+            } else if (response.event === "QRCODE") {
+                setDevice((prevDevices) =>
+                    prevDevices.map((dev) =>
+                        dev.sessionId === response.session
+                            ? { ...dev, status: "QRCODE", image: response.data }
+                            : dev
+                    )
+                );
+                setTimeout(() => {
+                    socket.emit("status", response.session)
+                }, 5000);
+            } else if (response.event === "restart") {
+                setDevice((prevDevices) =>
+                    prevDevices.map((dev) =>
+                        dev.sessionId === response.session
+                            ? { ...dev, status: "Restart", image: null }
+                            : dev
+                    )
+                );
+            } else if (response.event === "status") {
+                if (response.data.state === "CONNECTED") {
+                    
+                    setTimeout(() => {
+                        socket.emit("updateInfo", response.session)
+                    }, 1000);
+                }
+            } else if (response.event === "loading_screen") {
+                socket.emit("status", response.session)
+            } else if (response.event === "authenticated") {
+                socket.emit("status", response.session)
+            } else if (response.event === "ready") {
+                socket.emit("status", response.session)
+            } else if (response.event === "disconnected") {
+                setTimeout(() => {
+                    socket.emit("logoutDevice", response.session)
+                }, 1000);
+            }
+            if (response.event === "sinkronisasi") {
+                setOpen(false)
+                setSinkron(false)
+                socket.emit("getDevice")
+            }
+        }
+        socket.on("waClient", handleWaClient)
+        return () => {
+            socket.off("waClient", handleWaClient)
+        };
+    }, []);
+    useEffect(() => {
+        if(device.length > 0){
+            device.map((hp)=>{
+                if (hp.status === "CONNECTED" && !hp.sync) {
+                    handleSync(hp.sessionId)
+                }
+            })
+        }
+    }, [device])
+
     return (
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-5">
             <AddDevice />
@@ -59,18 +108,23 @@ export default function Device() {
                         <div key={index} className="w-full bg-white rounded-lg shadow-md p-5 flex flex-col">
                             <div className="flex border-b-2 border-gray-100 pb-3 items-center">
                                 {hp.status === "QRCODE" ? (
-                                    <div className="w-32 h-32 rounded-lg p-2 bg-gray-200 flex justify-center items-center">
-                                        <img src={hp.image} className="w-full h-auto object-cover" />
+                                    <div className="">
+                                        <img src={hp.image} className="w-36 h-auto object-cover" />
                                     </div>
                                 ) : (
-                                    <div className="w-20 h-20 rounded-full bg-gray-200 flex justify-center items-center">
-                                        <img src={hp.image} className="w-full h-auto rounded-full object-cover" />
+                                    <div className="">
+                                        {hp.status === "CONNECTED" ?
+                                            <img src={hp.image} className="w-24 h-auto rounded-full object-cover" />
+                                            :
+                                            <img src={"https://i.gifer.com/origin/8b/8b4d5872105584fe9e2d445bea526eb5_w200.gif"} className="w-24 h-auto object-cover" />
+                                        }
                                     </div>
                                 )}
                                 <div className="w-full ms-5">
                                     <p className="text-2xl">{hp.sessionId}</p>
                                     <p className="text-sm">{hp.status}</p>
                                 </div>
+
                             </div>
                             <div className="flex flex-col mt-4 border-b-2 border-gray-100 pb-3">
                                 <div className="flex justify-between">
@@ -100,10 +154,10 @@ export default function Device() {
                                                 START
                                             </div>
                                         )}
-                                        <div 
+                                        <div
                                             className="w-full bg-red-500 cursor-pointer text-white text-center p-2 rounded-lg"
-                                            onClick={()=>handleDelete(hp.sessionId)}
-                                            >
+                                            onClick={() => handleDelete(hp.sessionId)}
+                                        >
                                             DELETE
                                         </div>
                                         <div className="w-full bg-blue-500 cursor-pointer text-white text-center p-2 rounded-lg">
@@ -112,10 +166,10 @@ export default function Device() {
                                     </div>
                                 ) : (
                                     <div className="w-full flex space-x-4">
-                                        <div 
+                                        <div
                                             className="w-full bg-red-500 cursor-pointer text-white text-center p-2 rounded-lg"
-                                            onClick={()=>handleDelete(hp.sessionId)}
-                                            >
+                                            onClick={() => handleDelete(hp.sessionId)}
+                                        >
                                             DELETE
                                         </div>
                                         <div className="w-full bg-blue-500 cursor-pointer text-white text-center p-2 rounded-lg">
@@ -127,6 +181,13 @@ export default function Device() {
                         </div>
                     );
                 })}
+            <Modal isOpen={open} >
+                <div className="flex flex-col justify-center items-center">
+                    <img src={"https://i.gifer.com/origin/8b/8b4d5872105584fe9e2d445bea526eb5_w200.gif"} className="w-32 h-auto mb-6 object-cover" />
+                    <p className="m-0 font-bold text-3xl text-blue-500">Mohon Tunggu...</p>
+                    <p className="m-0 text-red-500">Sedang mensikronkan dengan Server WhatsApp</p>
+                </div>
+            </Modal>
         </div>
     );
 }

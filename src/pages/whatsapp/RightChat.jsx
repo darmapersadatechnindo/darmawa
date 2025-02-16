@@ -1,4 +1,4 @@
-import { faBan, faCheck, faFileAlt, faPaperclip, faPaperPlane, faPhone, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faBan, faCheck, faFileAlt, faPaperclip, faPaperPlane, faPhone, faRefresh, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState, useRef } from "react";
 import socket from "../../components/config/Socket";
@@ -6,17 +6,17 @@ import Icon from "../../components/base/Icon";
 import Modal from '../../components/base/Moda'
 import WhatsApp from "../../components/config/WhatsApp";
 import Utils from "../../components/config/Utils";
+import { saveMedia, getMedia } from "../../components/config/indexedDBUtils";
 
+export default function RightChat({ chatId, sessionId, names, image, chats }) {
 
-export default function RightChat({ chatId, sessionId, names, image,chats }) {
-    
     const chatEndRef = useRef(null);
     const [pesan, setPesan] = useState("")
     const [file, setFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
     const fileInputRef = useRef(null);
     const [preview, setPreview] = useState(false)
-
+    const [listChat, setListChat] = useState(chats || [])
     const handleSenText = async () => {
         socket.emit("sendText", { chatId, message: pesan, sessionId })
         setPesan("")
@@ -46,10 +46,10 @@ export default function RightChat({ chatId, sessionId, names, image,chats }) {
         setFile(null);
         setFilePreview(null);
     };
-    
-    
-    
-    
+
+
+
+
     const handleSendMessage = () => {
         if (file) {
             const reader = new FileReader();
@@ -75,9 +75,60 @@ export default function RightChat({ chatId, sessionId, names, image,chats }) {
 
         setPreview(false)
     };
-    useEffect(()=>{
-        
-    },[chatId,chats])
+    useEffect(() => {
+        setListChat(chats || []);
+    }, [chats]);
+    useEffect(() => {
+        const fetchChatData = async () => {
+            try {
+                if (!chats || chats.length === 0) return;
+
+                const chatData = await Promise.all(
+                    chats.map(async (chat, index) => {
+                        let mediaUrl = null;
+
+                        try {
+                            if (chat.hasMedia) {
+                                // ✅ Cek media di IndexedDB
+                                const blob = await getMedia(chat.id._serialized);
+                                if (blob) {
+                                    mediaUrl = URL.createObjectURL(blob); // ✅ Convert Blob ke Object URL
+                                } else {
+                                    setTimeout(() => {
+                                        socket.emit("downloadMedia", { messageId: chat.id._serialized, sessionId });
+                                    }, index * 200);
+                                }
+                            }
+                        } catch (mediaError) {
+                            console.error("Error fetching media:", mediaError);
+                        }
+
+                        return {
+                            id: chat.id?._serialized || "",
+                            fromMe: chat.fromMe || false,
+                            mediaUrl,
+                            caption: chat._data?.caption || "",
+                            type: chat.type || "chat",
+                            links: chat.links || [],
+                            matchedText: chat._data?.matchedText || "",
+                            thumbnail: chat._data?.thumbnail || null,
+                            timestamp: chat.timestamp || Date.now(),
+                            title: chat._data?.title || "",
+                            description: chat._data?.description || "",
+                            body: chat.body || "",
+                            ack: chat._data?.ack || 0,
+                        };
+                    })
+                );
+
+                setListChat(chatData);
+            } catch (error) {
+                console.error("Error in fetchChatData:", error);
+            }
+        };
+
+        fetchChatData();
+    }, [chatId, chats])
     return (
         <div className="w-2/3 bg-white flex flex-col shadow-md max-h-[600px]">
             <div className="flex p-3 items-center">
@@ -88,23 +139,30 @@ export default function RightChat({ chatId, sessionId, names, image,chats }) {
             </div>
             <div className="flex-1 bg-gray-100 text-sm p-4 overflow-auto no-scrollbar ">
 
-                {chats.length > 0 &&
-                    chats.map((msg, index) => (
+                {listChat.length > 0 &&
+                    listChat.map((msg, index) => (
                         <div
                             key={index}
                             ref={index === chats.length - 1 ? chatEndRef : null}
-                            className={`flex ${msg.fromMe ? "justify-end" : "justify-start"} mb-3`}>
+                            className={`flex ${msg.fromMe ? "justify-end" : "justify-start"} mb-1`}>
                             <div className={`${msg.fromMe ? "bg-green-100" : "bg-white"} p-1 px-2 rounded-lg w-auto flex flex-col  max-w-[400px] `}>
                                 <div>
                                     <div className="max-w-[400px]">
                                         {msg.type === "image" && (
                                             <div className="flex flex-col">
-                                                <img
-                                                    src={msg.mediaUrl}
-                                                    alt="Media"
-                                                    className="w-full h-auto rounded-lg mb-2 cursor-pointer"
-                                                    onClick={() => Utils.openMedia(msg.mediaUrl)}
-                                                />
+                                                {!msg.mediaUrl ? (
+                                                    <div className={`flex flex-col justify-center ${msg.fromMe ? "bg-green-200" : "bg-gray-100"} p-2 mb-2 rounded-md`}>
+                                                        <FontAwesomeIcon icon={faRefresh} className="animate-spin mb-2" />
+                                                        <p className="italic">Download media</p>
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={msg.mediaUrl}
+                                                        alt="Media"
+                                                        className="w-full h-auto rounded-lg mb-2 cursor-pointer"
+                                                        onClick={() => Utils.openMedia(msg.mediaUrl)}
+                                                    />
+                                                )}
                                                 {msg.caption && (
                                                     <span dangerouslySetInnerHTML={{ __html: Utils.formatChat(msg.caption, msg) }} />
                                                 )}
@@ -112,19 +170,40 @@ export default function RightChat({ chatId, sessionId, names, image,chats }) {
                                             </div>
                                         )}
                                         {msg.type === "sticker" && (
-                                            <img
-                                                src={msg.mediaUrl}
-                                                alt="Media"
-                                                className="w-full h-32 rounded-lg mb-2 cursor-pointer"
-                                            />
+                                            <div>
+                                                {!msg.mediaUrl ? (
+                                                    <div className={`flex flex-col justify-center ${msg.fromMe ? "bg-green-200" : "bg-gray-100"} p-2 mb-2 rounded-md`}>
+                                                        <FontAwesomeIcon icon={faRefresh} className="animate-spin mb-2" />
+                                                        <p className="italic">Download media</p>
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={msg.mediaUrl}
+                                                        alt="Media"
+                                                        className="w-full h-32 rounded-lg mb-2 cursor-pointer"
+                                                    />
+                                                )}
+
+                                            </div>
+
                                         )}
                                         {msg.type === "video" && (
-                                            <video
-                                                controls
-                                                src={msg.mediaUrl}
-                                                className="w-full max-h-64 rounded-lg mb-2"
-                                                onClick={() => Utils.openMedia(msg.mediaUrl)}
-                                            />
+                                            <div>
+                                                {!msg.mediaUrl ? (
+                                                    <div className={`flex flex-col justify-center ${msg.fromMe ? "bg-green-200" : "bg-gray-100"} p-2 mb-2 rounded-md`}>
+                                                        <FontAwesomeIcon icon={faRefresh} className="animate-spin mb-2" />
+                                                        <p className="italic">Download media</p>
+                                                    </div>
+                                                ) : (
+                                                    <video
+                                                        controls
+                                                        src={msg.mediaUrl}
+                                                        className="w-full max-h-64 rounded-lg mb-2"
+                                                        onClick={() => Utils.openMedia(msg.mediaUrl)}
+                                                    />
+                                                )}
+                                            </div>
+
                                         )}
                                         {msg.type === "audio" && (
                                             <audio
