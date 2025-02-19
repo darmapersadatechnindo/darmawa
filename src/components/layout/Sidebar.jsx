@@ -42,11 +42,11 @@ export default function Sidebar({ isSidebarOpen, toggleSidebar }) {
       icon: faMobileAlt,
       path: "/app/device",
     },
-    {
-      name: "WhatsApp Web",
-      icon: faComments,
-      path: "/app/chat",
-    },
+    // {
+    //   name: "WhatsApp Web",
+    //   icon: faComments,
+    //   path: "/app/chat",
+    // },
     {
       name: "Logout",
       icon: faPowerOff,
@@ -63,11 +63,11 @@ export default function Sidebar({ isSidebarOpen, toggleSidebar }) {
       icon: faMobileAlt,
       path: "/app/device",
     },
-    {
-      name: "WhatsApp Web",
-      icon: faComments,
-      path: "/app/chat",
-    },
+    // {
+    //   name: "WhatsApp Web",
+    //   icon: faComments,
+    //   path: "/app/chat",
+    // },
     {
       name: "Logout",
       icon: faPowerOff,

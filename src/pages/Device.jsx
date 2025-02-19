@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useTitleContext } from "../components/config/TitleContext";
 import AddDevice from "../pages/whatsapp/AddDevice";
 import socket from "../components/config/Socket";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRefresh } from "@fortawesome/free-solid-svg-icons";
 import Modal from '../components/base/Moda'
+import { Link } from "react-router-dom";
 export default function Device() {
     const { updateTitle, updateSubtitle } = useTitleContext();
     const [device, setDevice] = useState([]);
@@ -30,11 +29,7 @@ export default function Device() {
     }
     const [sinkron, setSinkron] = useState(false)
     const [open, setOpen] = useState(false)
-    const handleSync = (sessionId) => {
-        setSinkron(true)
-        setOpen(true)
-        socket.emit("sinkronisasi", sessionId)
-    }
+    
     useEffect(() => {
         const handleWaClient = (response) => {
             console.log(response)
@@ -89,13 +84,7 @@ export default function Device() {
         };
     }, []);
     useEffect(() => {
-        if(device.length > 0){
-            device.map((hp)=>{
-                if (hp.status === "CONNECTED" && !hp.sync) {
-                    handleSync(hp.sessionId)
-                }
-            })
-        }
+      
     }, [device])
 
     return (
@@ -160,21 +149,14 @@ export default function Device() {
                                         >
                                             DELETE
                                         </div>
-                                        <div className="w-full bg-blue-500 cursor-pointer text-white text-center p-2 rounded-lg">
-                                            SET USER
-                                        </div>
+                                       
                                     </div>
                                 ) : (
                                     <div className="w-full flex space-x-4">
-                                        <div
-                                            className="w-full bg-red-500 cursor-pointer text-white text-center p-2 rounded-lg"
-                                            onClick={() => handleDelete(hp.sessionId)}
-                                        >
-                                            DELETE
-                                        </div>
-                                        <div className="w-full bg-blue-500 cursor-pointer text-white text-center p-2 rounded-lg">
-                                            SET USER
-                                        </div>
+                                       
+                                        <a href={`/wa/console/${hp.sessionId}`} target="_blank" className="w-full bg-blue-500 cursor-pointer text-white text-center p-2 rounded-lg">
+                                            Console Device
+                                        </a>
                                     </div>
                                 )}
                             </div>

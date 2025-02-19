@@ -4,7 +4,7 @@ import Header from "./Header"
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "../../pages/Dashboard";
 import Device from "../../pages/Device.jsx";
-import Pesan from "../../pages/Pesan.jsx";
+
 import Profile from '../../pages/Profile.jsx'
 import Logout from '../../pages/Logout.jsx'
 export default function Template() {
@@ -23,7 +23,7 @@ export default function Template() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/user" element={<Profile />} />
                         <Route path="/device" element={<Device />} />
-                        <Route path="/chat" element={<Pesan />} />
+                        
                         <Route path="/logout" element={<Logout />} />
                         <Route path="*" element={<div>Page Not Found</div>} />
                     </Routes>

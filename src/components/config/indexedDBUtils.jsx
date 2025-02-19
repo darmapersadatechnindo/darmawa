@@ -1,46 +1,63 @@
-import { openDB, deleteDB } from "idb";
+import { openDB } from "idb";
 
-// 🔥 100% FIX: Hapus IndexedDB otomatis saat aplikasi pertama kali dijalankan!
-const resetDatabase = async () => {
-  console.log("Menghapus database lama...");
-  await deleteDB("WhatsAppMediaDB");
-  console.log("Database lama dihapus, membuat ulang...");
-};
-
-// **Panggil resetDatabase sebelum inisialisasi IndexedDB**
-resetDatabase().then(() => {
-  console.log("Database reset, inisialisasi ulang...");
-});
-
-// ✅ Buat ulang IndexedDB dengan object store yang BENAR!
-const dbPromise = openDB("WhatsAppMediaDB", 1, {
+const dbPromise = openDB("WhatsAppDBDelta", 1, {
   upgrade(db) {
+    console.log("Membuka IndexedDB dan Membuat Object Store");
+
     if (!db.objectStoreNames.contains("media")) {
       db.createObjectStore("media", { keyPath: "id" });
-      console.log("Object store 'media' dibuat dengan keyPath 'id' ✅");
+    }
+    if (!db.objectStoreNames.contains("profil")) {
+      db.createObjectStore("profil", { keyPath: "id" });
     }
   },
 });
 
-// ✅ Fungsi untuk menyimpan media
+
 export const saveMedia = async (mediaId, mediaBlob, mimetype) => {
-  if (!mediaId || !mediaBlob || !mimetype) {
-    console.error("❌ Data tidak valid:", { mediaId, mediaBlob, mimetype });
-    return;
+  try {
+      const db = await dbPromise;
+      const arrayBuffer = await mediaBlob.arrayBuffer();
+      await db.put("media", { id: String(mediaId), data: arrayBuffer, mimetype })
+  } catch (error) {
+      console.error("❌ [saveMedia] Gagal menyimpan ke IndexedDB!", error);
   }
-
-  const db = await dbPromise;
-  console.log("✅ Menyimpan media ke IndexedDB:", { mediaId, mediaBlob, mimetype });
-
-  await db.put("media", { id: String(mediaId), blob: mediaBlob, mimetype });
 };
-
-// ✅ Fungsi untuk mengambil media
 export const getMedia = async (mediaId) => {
   const db = await dbPromise;
   const data = await db.get("media", String(mediaId));
 
-  if (!data || !data.blob) return null;
+  if (!data || !data.data) {
+      return null;
+  }
+  return new Blob([data.data], { type: data.mimetype });
+};
 
-  return new Blob([data.blob], { type: data.mimetype });
+export const saveProfilUrl = async (userId, prifilUrl) => {
+  try {
+      const db = await dbPromise;
+      await db.put("profil", { id: String(userId), data: prifilUrl })
+  } catch (error) {
+      console.error("❌ [saveMedia] Gagal menyimpan ke IndexedDB!", error);
+  }
+};
+export const getProfilUrl = async (userId) => {
+  try {
+    const db = await dbPromise;
+
+    if (!db.objectStoreNames.contains("profil")) {
+      console.error("❌ Object store 'profil' tidak ditemukan!");
+      return null;
+    }
+
+    const data = await db.get("profil", String(userId));
+
+    if (!data || !data.data) {
+      return null;
+    }
+    return data.data;
+  } catch (error) {
+    console.error("❌ [getProfilUrl] Gagal mengambil dari IndexedDB!", error);
+    return null;
+  }
 };

@@ -49,19 +49,27 @@ const Utils = {
     formatChat: (message, msg) => {
         if (!message) return "";
 
-        // Bold & Italic Formatting
+        // Format pesan untuk Bold dan Italic
         let formattedMessage = message
             .replace(/\*(.*?)\*/g, "<b>$1</b>")  // Bold (*text*)
-            .replace(/_(.*?)_/g, "<i>$1</i>")   // Italic (_text_)
-            .replace(/\n/g, "<br>");            // Newline to <br>
+            .replace(/_(.*?)_/g, "<i>$1</i>");   // Italic (_text_)
 
-        formattedMessage = formattedMessage.replace(
-            msg.matchedText,
-            `<a href="${msg.matchedText}" target="_blank" class="text-blue-500">${msg.matchedText}</a>`
-        );
+        // Ganti URL menjadi link yang dapat diklik
+        if (msg._data?.matchedText) {
+            const urlRegex = /https?:\/\/[^\s]+/g;
+            formattedMessage = formattedMessage.replace(
+                urlRegex,
+                (match) => `<span><a href="${match}" target="_blank" class="text-blue-500">${match}</a></span>`
+            );
+            
+        }
 
+        formattedMessage = formattedMessage.replace(/<div.*?>/g, "").replace(/<\/div>/g, "");
+        formattedMessage = formattedMessage.replace(/<p.*?>/g, "").replace(/<\/p>/g, "");
+        
         return formattedMessage;
     },
+
     formatFileSize(bytes) {
         if (bytes < 1024) return bytes + " B";
         else if (bytes < 1024 ** 2) return (bytes / 1024).toFixed(2) + " KB";

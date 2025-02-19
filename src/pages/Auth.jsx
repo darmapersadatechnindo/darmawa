@@ -13,7 +13,9 @@ export default function Auth() {
         handleSubmit,
         formState: { errors },
     } = useForm();
-
+    useEffect(() => {
+        document.title = "Login JapriMe - WhatApp Gateway Terbaik dan terlengkap di indonesia"
+      }, []);
     const onSubmit = async (data) => {
         setLoading(true)
         if (data.username === "admin" && data.password == "admin") {
@@ -46,7 +48,7 @@ export default function Auth() {
             <div className="bg-gray-50 border-2 border-gray-300 p-6 rounded-xl lg:w-1/4 w-full">
                 <div className="flex justify-center items-center mb-5">
                     <img src="/WhatsApp.png" alt="Japri Pay Nusantara" className="h-12" />
-                    <p className="text-2xl ms-2 font-bold">Darma WhatsApp</p>
+                    <p className="text-2xl ms-2 font-bold">JampiMe</p>
                 </div>
 
 
