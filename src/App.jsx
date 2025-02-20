@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/config/ProtectedRoute";
 import Template from "./components/layout/Template";
-import Console from "./components/layout/console";
+import Console from "./components/layout/Console";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("isLogin") === "true");
   return (
