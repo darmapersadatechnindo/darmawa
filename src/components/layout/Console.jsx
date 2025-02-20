@@ -8,8 +8,9 @@ import ListChats from "../whatsapp/ListChats";
 import Contact from "../whatsapp/Contact";
 import ListMessage from "../whatsapp/ListMessage";
 import { useTitleContext } from "../config/TitleContext";
-import Info from "../whatsapp/info";
+import Info from "../whatsapp/Info";
 import ChatInput from "../whatsapp/ChatInput";
+
 export default function Console() {
     const { name, image, userId, updateUserId } = useTitleContext();
     const { sessionId } = useParams();
