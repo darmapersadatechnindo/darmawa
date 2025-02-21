@@ -29,7 +29,7 @@ export default function Profile() {
         setRow(result);
         if (result.length > 0) {
             const generatedColumns = Object.keys(result[0])
-                .filter(key => key !== "userId" && key !== "password" && key !== "__v" && key !== "updatedAt" && key !== "createdAt" && key !== "_id")
+                .filter(key => key !== "userId" && key !== "password")
                 .map(key => {
                     if (key === 'level') {
                         return {
@@ -54,7 +54,7 @@ export default function Profile() {
                             <FontAwesomeIcon icon={faEdit} />
                         </Badge>
                         {row.original.role === "user" && (
-                            <Badge type={'danger'} handleClick={() => handleDelete(row.original._id)}>
+                            <Badge type={'danger'} handleClick={() => handleDelete(row.original.userId)}>
                                 <FontAwesomeIcon icon={faTrash} />
                             </Badge>
                         )}

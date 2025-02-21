@@ -46,7 +46,9 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
     };
     useEffect(() => {
         const showMedia = async (response) => {
+            
             if (response.event === "downloadMedia" && response.session === sessionId) {
+                
                 const { messageId, media } = response.data;
                 const mediaArrayBuffer = base64ToArrayBuffer(media.data);
                 const mediaBlob = new Blob([mediaArrayBuffer], { type: media.mimetype });
@@ -66,7 +68,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
 
 
         socket.on("downloadMedia", showMedia);
-        console.log(listMessage)
+        
         
         if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -83,15 +85,15 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
             return (
                 <div className="flex flex-col space-y-1" key={index} ref={index === listMessage.length - 1 ? chatEndRef : null}>
                     <div className={`flex text-sm ${msg.fromMe ? "justify-end" : "justify-start"} mb-1`}>
-                        <div className={`${msg.fromMe ? "bg-emerald-800" : "bg-gray-700"} text-white p-1 px-2 rounded-lg w-auto flex flex-col  max-w-[400px] `}>
+                        <div className={`${msg.fromMe ? "bg-green-100" : "bg-gray-100"} text-black p-1 px-2 rounded-lg w-auto flex flex-col  max-w-[400px] `}>
 
                             <div>
-                                {isGroup && <p className="text-emerald-400 mb-3 text-sm w-full">{msg.id.participant.user}</p>}
+                                {isGroup && <p className="text-green-900 mb-2 text-xs w-full">{msg.id.participant.user}</p>}
                                 <div className="max-w-[400px]">
                                     {msg.type === "image" && (
                                         <div className="flex flex-col">
                                             {!mediaUrl ? (
-                                                <div className={`flex flex-col justify-center ${msg.fromMe ? "bg-emerald-900" : "bg-gray-800"} p-2 mb-2 rounded-md`}>
+                                                <div className={`flex flex-col justify-center ${msg.fromMe ? "bg-green-200" : "bg-gray-200"} p-2 mb-2 rounded-md`}>
                                                     <FontAwesomeIcon icon={faRefresh} className="animate-spin mb-2" />
                                                     <p className="italic">Download media</p>
                                                 </div>
@@ -112,7 +114,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                                     {msg.type === "sticker" && (
                                         <div>
                                             {!mediaUrl ? (
-                                                <div className={`flex flex-col justify-center  ${msg.fromMe ? "bg-emerald-900" : "bg-gray-800"} p-2 mb-2 rounded-md`}>
+                                                <div className={`flex flex-col justify-center  ${msg.fromMe ? "bg-green-200" : "bg-gray-200"} p-2 mb-2 rounded-md`}>
                                                     <FontAwesomeIcon icon={faRefresh} className="animate-spin mb-2" />
                                                     <p className="italic">Download media</p>
                                                 </div>
@@ -130,7 +132,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                                     {msg.type === "video" && (
                                         <div>
                                             {!mediaUrl ? (
-                                                <div className={`flex flex-col justify-center  ${msg.fromMe ? "bg-emerald-900" : "bg-gray-800"} p-2 mb-2 rounded-md`}>
+                                                <div className={`flex flex-col justify-center  ${msg.fromMe ? "bg-green-200" : "bg-gray-200"} p-2 mb-2 rounded-md`}>
                                                     <FontAwesomeIcon icon={faRefresh} className="animate-spin mb-2" />
                                                     <p className="italic">Download media</p>
                                                 </div>
@@ -167,7 +169,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                                     {msg.type === "document" && (
                                         <div className="cursor-pointer " onClick={() => Utils.openMedia(mediaUrl)}>
                                             {msg.mimetype === "application/pdf" ? (
-                                                <div className={`flex mb-2 items-center space-x-3 text-sm p-2  ${msg.fromMe ? "bg-emerald-900" : "bg-gray-800"} rounded-md`}>
+                                                <div className={`flex mb-2 items-center space-x-3 text-sm p-2  ${msg.fromMe ? "bg-green-200" : "bg-gray-200"} rounded-md`}>
                                                     <iframe
                                                         src={mediaUrl}
                                                         className="w-full h-50 rounded-lg"
@@ -176,7 +178,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                                                 </div>
 
                                             ) : (
-                                                <div className={`flex mb-2 items-center space-x-3 text-sm p-2  ${msg.fromMe ? "bg-emerald-900" : "bg-gray-800"} rounded-md`}>
+                                                <div className={`flex mb-2 items-center space-x-3 text-sm p-2  ${msg.fromMe ? "bg-green-200" : "bg-gray-200"} rounded-md`}>
                                                     <FontAwesomeIcon icon={faFileAlt} className="text-2xl text-blue-500" />
                                                     <div>
                                                         <p className="text-sm">{msg._data.caption}</p>
@@ -192,7 +194,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                             {msg.links.length > 0 && (
                                 <div>
                                     <a href={msg._data.matchedText} target="_blank">
-                                        <div className={`${msg.fromMe ? "bg-emerald-900" : "bg-gray-800"} text-sm rounded-lg mb-2 max-w-[400px]`}>
+                                        <div className={`${msg.fromMe ? "bg-green-200" : "bg-gray-200"} text-sm rounded-lg mb-2 max-w-[400px]`}>
                                             {msg._data.thumbnail && <p className="text-xs">
                                                 <div
                                                     className="w-full h-[200px] rounded-tl-lg rounded-tr-lg bg-cover bg-center"
@@ -205,7 +207,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                                                 </p> : <p className="text-sm m-0">
                                                     {msg._data.matchedText}
                                                 </p>}
-                                                {msg._data.description && <p className="text-[10px] text-gray-300 m-0">
+                                                {msg._data.description && <p className="text-[10px] text-gray-500 m-0">
                                                     {msg._data.description}
                                                 </p>}
                                             </div>
@@ -227,7 +229,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                                 </div>
                             )}
                             {msg.type === "call_log" && (
-                                <div className={`${msg.fromMe ? "bg-emerald-900" : "bg-gray-800"} flex text-sm mb-2 rounded-lg p-3 max-w-[400px] items-center`}>
+                                <div className={`${msg.fromMe ? "bg-green-200" : "bg-gray-200"} flex text-sm mb-2 rounded-lg p-3 max-w-[400px] items-center`}>
                                     <div className="w-9 h-9 bg-gray-500 me-3 rounded-full flex justify-center items-center">
                                         <FontAwesomeIcon icon={faPhone} className="text-white" />
                                     </div>
@@ -235,7 +237,7 @@ export default function ListMessage({ chatId, listMessage, sessionId }) {
                                 </div>
                             )}
                             <div className={`flex items-center ${msg.fromMe ? "justify-end" : "justify-start"} mt-1`}>
-                                <p className={`text-xs ${msg.fromMe ? "text-start" : "text-end w-full"} text-gray-300`}>
+                                <p className={`text-xs ${msg.fromMe ? "text-start" : "text-end w-full"} text-gray-600`}>
                                     {Utils.formatDate(msg.timestamp)}
                                 </p>
                                 {msg.fromMe && (

@@ -8,7 +8,7 @@ import { useRef, useState,useEffect } from "react";
 import { useTitleContext } from "../config/TitleContext";
 import { saveProfilUrl,getProfilUrl } from "../config/indexedDBUtils";
 
-export default function ListChats({ listChat, setParrent, sessionId }) {
+export default function ListChats({ listChat, sessionId }) {
     const [selected, setSelected] = useState({});
     const { updateName, updateImage, updateUserId } = useTitleContext();
     const [isFocused, setIsFocused] = useState(false);
@@ -100,15 +100,11 @@ export default function ListChats({ listChat, setParrent, sessionId }) {
     }, [listChat]);
     
     return (
-        <div className="">
-            <div className="flex flex-col max-h-screen p-2">
-                <div className="mb-3">
-                    <div className="flex text-white p-3 justify-between">
-                        <p className="text-2xl font-bold">Chat</p>
-                        <p onClick={setParrent} className="cursor-pointer">
-                            <FontAwesomeIcon icon={faCommentMedical} className="text-2xl" /></p>
-                    </div>
-                    <div className="flex bg-gray-700 w-full px-4 py-3 rounded-xl mb-3">
+        <div className="w-100 h-[600px]">
+            <div className="flex flex-col max-h-screen p-1">
+                <div className="mb-2">
+                    
+                    <div className="flex bg-gray-200 w-full px-4 py-3 rounded-xl mb-3">
                         {!isFocused && (
                             <FontAwesomeIcon
                                 icon={faSearch}
@@ -119,7 +115,7 @@ export default function ListChats({ listChat, setParrent, sessionId }) {
                         {isFocused && (
                             <FontAwesomeIcon
                                 icon={faArrowLeft}
-                                className="text-white text-xl cursor-pointer"
+                                className="text-green-600 text-xl cursor-pointer"
                                 onClick={blurInput}
                             />
                         )}
@@ -127,7 +123,7 @@ export default function ListChats({ listChat, setParrent, sessionId }) {
                             type="text"
                             value={pencarian}
                             onChange={(e) => setPencarian(e.target.value)}
-                            className="text-white ms-4 w-full bg-gray-700 focus:outline-none"
+                            className="text-black ms-4 w-full bg-gray-200 focus:outline-none"
                             placeholder="Cari"
                             onFocus={() => setIsFocused(true)}
                             onBlur={blurInput} 
@@ -136,7 +132,7 @@ export default function ListChats({ listChat, setParrent, sessionId }) {
 
                     </div>
                 </div>
-                <div className="flex-1 flex flex-col overflow-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-gray-800">
+                <div className="flex-1 flex flex-col overflow-auto no-scrollbar pb-32">
                     <AnimatePresence exitBeforeEnter>
                         {filteredChats.length > 0 && filteredChats.map((chat, index) => {
                             let message;
@@ -187,21 +183,21 @@ export default function ListChats({ listChat, setParrent, sessionId }) {
                                     layoutId={chat.chatId}
                                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                     onClick={() => handleClick(chat.chatId, chat.name, imageUrl)}
-                                    className={`flex p-3 ${isSelected && "bg-gray-700"} cursor-pointer items-center border-b border-gray-700 hover:bg-gray-700`}
+                                    className={`flex p-2 ${isSelected && "bg-gray-200"} cursor-pointer items-center border-b border-gray-200 hover:bg-gray-200`}
                                 >
-                                    <img src={imageUrl} className="w-12 h-12 rounded-full object-cover" />
-                                    <div className="flex flex-col text-white w-full ms-4">
-                                        <div className="flex justify-between text-md">
+                                    <img src={imageUrl} className="w-9 h-9 rounded-full object-cover" />
+                                    <div className="flex w-full flex-col text-black ms-2">
+                                        <div className="flex justify-between text-md mb-1">
                                             <p>{chat.name} {chat.pinned && ""}</p>
-                                            <p className="text-sm">{Utils.formatDate(chat.timestamp)}</p>
+                                            <p className="text-xs">{Utils.formatDate(chat.timestamp)}</p>
                                         </div>
-                                        <div className="flex justify-between text-sm text-gray-400">
+                                        <div className="flex justify-between text-xs text-gray-500">
                                             <p className="flex space-x-1 items-center overflow-hidden text-ellipsis whitespace-nowrap">
                                                 {getMessageStatusIcon(chat)} {icon}
                                                 <span dangerouslySetInnerHTML={{ __html: formatMessage(message) }} />
                                             </p>
                                             {chat.unread > 0 ? (
-                                                <p className="text-xs bg-emerald-500 text-black rounded-full flex justify-center items-center w-6 h-6">
+                                                <p className="text-xs bg-emerald-500 text-white rounded-full flex justify-center items-center w-5 h-5">
                                                     {chat.unread}
                                                 </p>
                                             ) : chat.pinned && <FontAwesomeIcon icon={faThumbTack} />}

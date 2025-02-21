@@ -17,6 +17,9 @@ export default function ChatInput({ sessionId,handleFileSelect }) {
     const sendMessage = () => {
         if (message.trim() === "") return;
         socket.emit("sendText", { chatId: userId, message, sessionId })
+        setTimeout(() => {
+            socket.emit("showChats", { userId, sessionId })
+        }, 500);
         setMessage("");
     };
     const clearFile = () => {
@@ -25,7 +28,7 @@ export default function ChatInput({ sessionId,handleFileSelect }) {
     };
     
     return (
-        <div className="p-4 bg-gray-700 flex items-center text-gray-400 space-x-3 me-2">
+        <div className="p-2 bg-white flex items-center text-gray-400 space-x-3">
             <div onClick={() => fileInputRef.current.click()}>
                 <input
                     type="file"
@@ -33,10 +36,10 @@ export default function ChatInput({ sessionId,handleFileSelect }) {
                     className="hidden"
                     onChange={handleFileSelect}
                 />
-                <Icon.attachment className="w-12 h-12 text-white cursor-pointer" />
+                <Icon.attachment className="w-12 h-12 text-gray-500 cursor-pointer" />
             </div>
             <textarea
-                className="w-full px-3 py-2 bg-gray-600 rounded-lg text-white focus:outline-none resize-none"
+                className="w-full px-3 py-2 bg-gray-200 rounded-lg text-gray-700 focus:outline-none resize-none"
                 placeholder="Masukan pesan disini...."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -44,7 +47,7 @@ export default function ChatInput({ sessionId,handleFileSelect }) {
                 rows={1}
             />
             <div onClick={sendMessage}>
-                <Icon.send className="w-16 h-12 text-white cursor-pointer" />
+                <Icon.send className="w-16 h-12 text-gray-500 cursor-pointer" />
             </div>
 
         </div>

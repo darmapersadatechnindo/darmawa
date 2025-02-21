@@ -18,29 +18,29 @@ export default function Auth() {
       }, []);
     const onSubmit = async (data) => {
         setLoading(true)
-        if (data.username === "admin" && data.password == "admin") {
-                    localStorage.setItem("isLogin", true);
-                    localStorage.setItem("level", "owner")
-                    localStorage.setItem("username", "admin");
-                    localStorage.setItem("ownerId", 1);
-                    window.location.href = "./app/dashboard"
-        }
-        //socket.emit("login", { username: data.username, password: data.password });
-        // socket.on("login", (response) => {
-        //     setLoading(false);
-        //     if (response.success) {
-        //         Toast(response.message, 1)
-        //         localStorage.setItem("isLogin", true);
-        //         localStorage.setItem("level", response.data.role)
-        //         localStorage.setItem("username", response.data.username);
-        //         localStorage.setItem("ownerId", response.data.userId);
-        //         window.location.href = "./app/dashboard"
+        // if (data.username === "admin" && data.password == "admin") {
+        //             localStorage.setItem("isLogin", true);
+        //             localStorage.setItem("level", "owner")
+        //             localStorage.setItem("username", "admin");
+        //             localStorage.setItem("ownerId", 1);
+        //             window.location.href = "./app/dashboard"
+        // }
+        socket.emit("login", { username: data.username, password: data.password });
+        socket.on("login", (response) => {
+            setLoading(false);
+            if (response.success) {
+                Toast(response.message, 1)
+                localStorage.setItem("isLogin", true);
+                localStorage.setItem("level", response.data.role)
+                localStorage.setItem("username", response.data.username);
+                localStorage.setItem("ownerId", response.data.userId);
+                window.location.href = "./app/dashboard"
 
-        //     } else {
-        //         Toast(response.message, 0)
-        //     }
-        //    setLoading(false)
-        //});
+            } else {
+                Toast(response.message, 0)
+            }
+           setLoading(false)
+        });
     };
 
     return (

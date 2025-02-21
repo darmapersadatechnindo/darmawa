@@ -2,38 +2,32 @@ import { useEffect, useState } from "react";
 import { useTitleContext } from "../components/config/TitleContext";
 import AddDevice from "../pages/whatsapp/AddDevice";
 import socket from "../components/config/Socket";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUserEdit } from "@fortawesome/free-solid-svg-icons";
 import Modal from '../components/base/Moda'
-import { Link } from "react-router-dom";
 export default function Device() {
     const { updateTitle, updateSubtitle } = useTitleContext();
     const [device, setDevice] = useState([]);
-    const [started, setStarted] = useState({});
+    const [user, setUser] = useState([])
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [isOpen, setIsOpen] = useState(false)
+    const [userId, setUserId] = useState("")
     useEffect(() => {
         updateTitle("WhatsApp");
         updateSubtitle("Device");
         socket.emit("getDevice")
+        socket.emit("showUser")
     }, []);
 
-    const startSession = (sessionId) => {
-        setStarted((prev) => ({ ...prev, [sessionId]: true }));
-        socket.emit("start", sessionId);
-
-    };
-
-    const restartSession = (sessionId) => {
-        setStarted((prev) => ({ ...prev, [sessionId]: true }));
-        socket.emit("restart", sessionId);
-    };
     const handleDelete = (sessionId) => {
         socket.emit("delete", sessionId)
     }
-    const [sinkron, setSinkron] = useState(false)
-    const [open, setOpen] = useState(false)
-    
     useEffect(() => {
         const handleWaClient = (response) => {
             console.log(response)
             if (response.event === "showDevice") {
+                setDevice(response.data)
+            } else if (response.event === "createDevice") {
                 setDevice(response.data)
             } else if (response.event === "QRCODE") {
                 setDevice((prevDevices) =>
@@ -46,53 +40,48 @@ export default function Device() {
                 setTimeout(() => {
                     socket.emit("status", response.session)
                 }, 5000);
-            } else if (response.event === "restart") {
-                setDevice((prevDevices) =>
-                    prevDevices.map((dev) =>
-                        dev.sessionId === response.session
-                            ? { ...dev, status: "Restart", image: null }
-                            : dev
-                    )
-                );
-            } else if (response.event === "status") {
-                if (response.data.state === "CONNECTED") {
-                    
-                    setTimeout(() => {
-                        socket.emit("updateInfo", response.session)
-                    }, 1000);
-                }
-            } else if (response.event === "loading_screen") {
-                socket.emit("status", response.session)
-            } else if (response.event === "authenticated") {
-                socket.emit("status", response.session)
             } else if (response.event === "ready") {
-                socket.emit("status", response.session)
+                setDevice(response.data)
             } else if (response.event === "disconnected") {
-                setTimeout(() => {
-                    socket.emit("logoutDevice", response.session)
-                }, 1000);
+
             }
-            if (response.event === "sinkronisasi") {
-                setOpen(false)
-                setSinkron(false)
-                socket.emit("getDevice")
-            }
+
+        }
+        const showUsers = (response) => {
+            setUser(response.data)
         }
         socket.on("waClient", handleWaClient)
+        socket.on("user", showUsers)
         return () => {
             socket.off("waClient", handleWaClient)
         };
     }, []);
     useEffect(() => {
-      
-    }, [device])
 
+    }, [device])
+    const EditAkses = (id) => {
+
+        setIsOpen(true)
+        setUserId(id)
+    }
+    const handleCheckboxChange = (userId) => {
+        setSelectedUsers((prev) =>
+            prev.includes(userId)
+                ? prev.filter((user) => user !== userId)
+                : [...prev, userId]
+        );
+    };
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        socket.emit("setRole",{selectedUsers,deviceId:userId})
+        setIsOpen(false)
+    };
     return (
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-5">
             <AddDevice />
             {device.length > 0 &&
                 device.map((hp, index) => {
-                    const isStarted = started[hp.sessionId] === true;
+
                     return (
                         <div key={index} className="w-full bg-white rounded-lg shadow-md p-5 flex flex-col">
                             <div className="flex border-b-2 border-gray-100 pb-3 items-center">
@@ -113,6 +102,11 @@ export default function Device() {
                                     <p className="text-2xl">{hp.sessionId}</p>
                                     <p className="text-sm">{hp.status}</p>
                                 </div>
+                                {hp.setUser === 0 &&
+                                    <div className="cursor-pointer" onClick={() => EditAkses(hp.id)}>
+                                        <FontAwesomeIcon icon={faUserEdit} className="text-4xl text-gray-700" />
+                                    </div>
+                                }
 
                             </div>
                             <div className="flex flex-col mt-4 border-b-2 border-gray-100 pb-3">
@@ -132,30 +126,19 @@ export default function Device() {
                             <div className="flex-1 flex items-center justify-between space-x-4">
                                 {hp.status !== "CONNECTED" ? (
                                     <div className="w-full flex space-x-4">
-                                        {isStarted || hp.status === "QRCODE" ? (
-                                            <div className="w-full bg-green-500 cursor-pointer text-white text-center p-2 rounded-lg"
-                                                onClick={() => restartSession(hp.sessionId)}>
-                                                RE-START
-                                            </div>
-                                        ) : (
-                                            <div className="w-full bg-green-500 cursor-pointer text-white text-center p-2 rounded-lg"
-                                                onClick={() => startSession(hp.sessionId)}>
-                                                START
-                                            </div>
-                                        )}
                                         <div
                                             className="w-full bg-red-500 cursor-pointer text-white text-center p-2 rounded-lg"
                                             onClick={() => handleDelete(hp.sessionId)}
                                         >
                                             DELETE
                                         </div>
-                                       
+
                                     </div>
                                 ) : (
                                     <div className="w-full flex space-x-4">
-                                       
+
                                         <a href={`/wa/console/${hp.sessionId}`} target="_blank" className="w-full bg-blue-500 cursor-pointer text-white text-center p-2 rounded-lg">
-                                            Console Device
+                                            Open Chat
                                         </a>
                                     </div>
                                 )}
@@ -163,12 +146,42 @@ export default function Device() {
                         </div>
                     );
                 })}
-            <Modal isOpen={open} >
-                <div className="flex flex-col justify-center items-center">
-                    <img src={"https://i.gifer.com/origin/8b/8b4d5872105584fe9e2d445bea526eb5_w200.gif"} className="w-32 h-auto mb-6 object-cover" />
-                    <p className="m-0 font-bold text-3xl text-blue-500">Mohon Tunggu...</p>
-                    <p className="m-0 text-red-500">Sedang mensikronkan dengan Server WhatsApp</p>
-                </div>
+            <Modal isOpen={isOpen} >
+                <p className="text-center text-xl mb-5">Edit Akses Device {userId}</p>
+                <form onSubmit={handleSubmit}>
+                    <input type="hidden" value={userId} name="deviceId" />
+                    <div className="flex flex-col">
+                        <p className="mb-3">Silahkan tentukan akses device bisa dilihat atau dikelola oleh siapa saja</p>
+                        {user.length > 0 && user.map((usr, index) => {
+                            return (
+                                <div key={index} className="flex mb-3">
+                                    <input
+                                        type="checkbox"
+                                        name={"userId"}
+                                        onChange={() => handleCheckboxChange(usr.userId)}
+                                    />
+                                    <p className="ms-2">{usr.username}</p>
+                                </div>
+                            )
+                        })}
+                        <div className="flex justify-between">
+                            <button
+                                type="submit"
+                                className="w-full mt-2 p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg text-white font-semibold transition duration-200"
+                            >
+                                Submit
+                            </button>
+                            <div className="w-full"></div>
+                            <button
+                                type="button"
+                                onClick={() => setIsOpen(false)}
+                                className="w-full mt-2 p-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed rounded-lg text-white font-semibold transition duration-200"
+                            >
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </Modal>
         </div>
     );

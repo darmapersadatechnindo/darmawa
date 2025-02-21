@@ -4,9 +4,11 @@ import Header from "./Header"
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "../../pages/Dashboard";
 import Device from "../../pages/Device.jsx";
-
 import Profile from '../../pages/Profile.jsx'
 import Logout from '../../pages/Logout.jsx'
+import Chat from "../../pages/Chat.jsx";
+import Phone from "../../pages/Phone.jsx";
+import Broadcast from "../../pages/Broadcast.jsx";
 export default function Template() {
 
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -23,7 +25,9 @@ export default function Template() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/user" element={<Profile />} />
                         <Route path="/device" element={<Device />} />
-                        
+                        <Route path="/chat" element={<Chat />} />
+                        <Route path="/phone" element={<Phone />} />
+                        <Route path="/broadcast" element={<Broadcast />} />
                         <Route path="/logout" element={<Logout />} />
                         <Route path="*" element={<div>Page Not Found</div>} />
                     </Routes>

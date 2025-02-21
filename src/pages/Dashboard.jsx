@@ -13,7 +13,7 @@ export default function Dashboard() {
     const { updateTitle, updateSubtitle } = useTitleContext();
     const [user, settUser] = useState({})
     useEffect(() => {
-        updateSubtitle("Darma WhatsApp")
+        updateSubtitle("JapriMe")
         updateTitle("Dashboard")
         const getUser = async () => {
             const data = await SupabaseClient.getWhere("profile", "username", localStorage.getItem("username"));

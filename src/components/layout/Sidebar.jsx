@@ -3,23 +3,16 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTachometerAlt,
-  faFolder,
-  faUsers,
-  faExchangeAlt,
   faChevronDown,
   faChevronUp,
-  faFile, faImages,
   faPowerOff,
-  faCubes,
-  faShoppingCart,
-  faMessage,
-  faCommentAlt,
   faComment,
-  faMobile,
   faMobileAlt,
   faComments,
-  faUser,
-  faUserCircle
+  faUserCircle,
+  faAddressBook,
+  faBullhorn,
+  faCode
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function Sidebar({ isSidebarOpen, toggleSidebar }) {
@@ -42,11 +35,31 @@ export default function Sidebar({ isSidebarOpen, toggleSidebar }) {
       icon: faMobileAlt,
       path: "/app/device",
     },
-    // {
-    //   name: "WhatsApp Web",
-    //   icon: faComments,
-    //   path: "/app/chat",
-    // },
+    {
+      name: "Realtime Chat",
+      icon: faComments,
+      path: "/app/chat",
+    },
+    {
+      name: "Phone Book",
+      icon: faAddressBook,
+      path: "/app/phone",
+    },
+    {
+      name: "Broadcast",
+      icon: faBullhorn,
+      path: "/app/broadcast",
+    },
+    {
+      name: "Send Message",
+      icon: faComment,
+      path: "/app/send",
+    },
+    {
+      name: "Rest Api",
+      icon: faCode,
+      path: "/app/api",
+    },
     {
       name: "Logout",
       icon: faPowerOff,
@@ -63,11 +76,11 @@ export default function Sidebar({ isSidebarOpen, toggleSidebar }) {
       icon: faMobileAlt,
       path: "/app/device",
     },
-    // {
-    //   name: "WhatsApp Web",
-    //   icon: faComments,
-    //   path: "/app/chat",
-    // },
+    {
+      name: "Realtime Chat",
+      icon: faComments,
+      path: "/app/chat",
+    },
     {
       name: "Logout",
       icon: faPowerOff,
